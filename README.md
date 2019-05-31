@@ -1,6 +1,6 @@
-# pytorch-mnist
+# Pytorch-Ignite-CV-Learning
 
-The MNIST trained on pytorch ignite with multiple models
+The CV algorithms trained on pytorch ignite with multiple models
 
 Used for practicing with high-level interfaces provided by pytorch-ignite
 
@@ -17,8 +17,6 @@ python train.py
 
 ### Status
 
-Inited with LeNet and continuing to add more models into it. 
-
-Possibly extending to more datasets. 
+Inited with MNIST and LeNet and continuing to add more models into it. 
 
 Welcome advices on the coding standard! 

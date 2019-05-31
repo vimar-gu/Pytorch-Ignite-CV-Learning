@@ -1,7 +1,7 @@
 import argparse
 import torch.nn as nn
 from torch.optim import SGD
-from models.lenet import LeNet
+from models import build_model
 from data import train_set, test_set
 from torch.utils.data import DataLoader
 from engine.trainer import do_train
@@ -15,7 +15,7 @@ parser.add_argument('--device', type=str, default='cuda:0')
 parser.add_argument('--log_interval', type=int, default=50)
 opt = parser.parse_args()
 
-model = LeNet()
+model = build_model(opt)
 train_loader = DataLoader(train_set, batch_size=opt.batch_size, shuffle=True)
 test_loader = DataLoader(test_set, batch_size=opt.batch_size, shuffle=False)
 optimizer = SGD(model.parameters(), lr=opt.lr)
