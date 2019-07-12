@@ -2,14 +2,14 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from config import rpn_cfg
+from .config import rpn_cfg
 
 import sys
 sys.path.append('./')
 
 from utils import nms
-from generate_anchors import generate_anchors
-from bbox_transform import bbox_transform_inv, clip_boxes
+from .generate_anchors import generate_anchors
+from .bbox_transform import bbox_transform_inv, clip_boxes
 
 
 class ProposalLayer(nn.Module):

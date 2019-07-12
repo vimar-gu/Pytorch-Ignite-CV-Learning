@@ -3,9 +3,9 @@ import torch.nn as nn
 import numpy as np
 import numpy.random as npr
 
-from config import rpn_cfg
-from generate_anchors import generate_anchors
-from bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
+from .config import rpn_cfg
+from .generate_anchors import generate_anchors
+from .bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
 
 
 class AnchorTargetLayer(nn.Module):

@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from config import rpn_cfg
-from proposal_layer import ProposalLayer
-from anchor_target_layer import AnchorTargetLayer
+from .config import rpn_cfg
+from .proposal_layer import ProposalLayer
+from .anchor_target_layer import AnchorTargetLayer
 
 import numpy as np
 
