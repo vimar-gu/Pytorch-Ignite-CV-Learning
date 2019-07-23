@@ -3,6 +3,11 @@ import numpy as np
 
 def nms(dets, thresh):
     """Pure Python NMS baseline."""
+    device = 'cpu'
+    if dets.device != 'cpu':
+        device = dets.device
+        dets = dets.cpu()
+
     dets = dets.numpy()
     x1 = dets[:, 0]
     y1 = dets[:, 1]
@@ -30,4 +35,7 @@ def nms(dets, thresh):
         inds = np.where(ovr <= thresh)[0]
         order = order[inds + 1]
 
-    return torch.IntTensor(keep)
+    result = torch.IntTensor(keep)
+    if device != 'cpu':
+        result = result.to(device)
+    return result

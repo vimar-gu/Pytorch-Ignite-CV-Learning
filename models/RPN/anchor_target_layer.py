@@ -57,8 +57,8 @@ class AnchorTargetLayer(nn.Module):
 
         keep = ((all_anchors[:, 0] >= -self._allowed_border) &
                 (all_anchors[:, 1] >= -self._allowed_border) &
-                (all_anchors[:, 2] < long(im_info[0][1]) + self._allowed_border) &
-                (all_anchors[:, 3] < long(im_info[0][0]) + self._allowed_border))
+                (all_anchors[:, 2] < im_info[0][1] + self._allowed_border) &
+                (all_anchors[:, 3] < im_info[0][0] + self._allowed_border))
 
         inds_inside = torch.nonzero(keep).view(-1)
 
@@ -75,8 +75,8 @@ class AnchorTargetLayer(nn.Module):
         max_overlaps, argmax_overlaps = torch.max(overlaps, 2)
         gt_max_overlaps, _ = torch.max(overlaps, 1)
 
-        if not cfg.TRAIN.RPN_CLOBBER_POSITIVES:
-            labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0
+        if not rpn_cfg.TRAIN.RPN_CLOBBER_POSITIVES:
+            labels[max_overlaps < rpn_cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0
 
         gt_max_overlaps[gt_max_overlaps==0] = 1e-5
         keep = torch.sum(overlaps.eq(gt_max_overlaps.view(batch_size,1,-1).expand_as(overlaps)), 2)
@@ -85,12 +85,12 @@ class AnchorTargetLayer(nn.Module):
             labels[keep>0] = 1
 
         # fg label: above threshold IOU
-        labels[max_overlaps >= cfg.TRAIN.RPN_POSITIVE_OVERLAP] = 1
+        labels[max_overlaps >= rpn_cfg.TRAIN.RPN_POSITIVE_OVERLAP] = 1
 
-        if cfg.TRAIN.RPN_CLOBBER_POSITIVES:
-            labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0
+        if rpn_cfg.TRAIN.RPN_CLOBBER_POSITIVES:
+            labels[max_overlaps < rpn_cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0
 
-        num_fg = int(cfg.TRAIN.RPN_FG_FRACTION * cfg.TRAIN.RPN_BATCHSIZE)
+        num_fg = int(rpn_cfg.TRAIN.RPN_FG_FRACTION * rpn_cfg.TRAIN.RPN_BATCHSIZE)
 
         sum_fg = torch.sum((labels == 1).int(), 1)
         sum_bg = torch.sum((labels == 0).int(), 1)
@@ -108,7 +108,7 @@ class AnchorTargetLayer(nn.Module):
                 labels[i][disable_inds] = -1
 
 #           num_bg = cfg.TRAIN.RPN_BATCHSIZE - sum_fg[i]
-            num_bg = cfg.TRAIN.RPN_BATCHSIZE - torch.sum((labels == 1).int(), 1)[i]
+            num_bg = rpn_cfg.TRAIN.RPN_BATCHSIZE - torch.sum((labels == 1).int(), 1)[i]
 
             # subsample negative labels if we have too many
             if sum_bg[i] > num_bg:
@@ -125,15 +125,15 @@ class AnchorTargetLayer(nn.Module):
         bbox_targets = _compute_targets_batch(anchors, gt_boxes.view(-1,5)[argmax_overlaps.view(-1), :].view(batch_size, -1, 5))
 
         # use a single value instead of 4 values for easy index.
-        bbox_inside_weights[labels==1] = cfg.TRAIN.RPN_BBOX_INSIDE_WEIGHTS[0]
+        bbox_inside_weights[labels==1] = rpn_cfg.TRAIN.RPN_BBOX_INSIDE_WEIGHTS[0]
 
-        if cfg.TRAIN.RPN_POSITIVE_WEIGHT < 0:
+        if rpn_cfg.TRAIN.RPN_POSITIVE_WEIGHT < 0:
             num_examples = torch.sum(labels[i] >= 0)
             positive_weights = 1.0 / num_examples.item()
             negative_weights = 1.0 / num_examples.item()
         else:
-            assert ((cfg.TRAIN.RPN_POSITIVE_WEIGHT > 0) &
-                    (cfg.TRAIN.RPN_POSITIVE_WEIGHT < 1))
+            assert ((rpn_cfg.TRAIN.RPN_POSITIVE_WEIGHT > 0) &
+                    (rpn_cfg.TRAIN.RPN_POSITIVE_WEIGHT < 1))
 
         bbox_outside_weights[labels == 1] = positive_weights
         bbox_outside_weights[labels == 0] = negative_weights

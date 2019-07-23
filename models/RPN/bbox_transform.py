@@ -96,7 +96,6 @@ def bbox_transform_inv(boxes, deltas, batch_size):
 
 
 def clip_boxes(boxes, im_shape, batch_size):
-
     for i in range(batch_size):
         boxes[i,:,0::4].clamp_(0, im_shape[i, 1]-1)
         boxes[i,:,1::4].clamp_(0, im_shape[i, 0]-1)

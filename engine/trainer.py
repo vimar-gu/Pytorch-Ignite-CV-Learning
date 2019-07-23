@@ -3,7 +3,7 @@ from ignite.engine import Events, create_supervised_trainer, create_supervised_e
 from ignite.metrics import Accuracy, Loss
 
 
-def do_train(opt, model, train_loader, test_loader, optimizer, loss_fn):
+def do_train_normal(opt, model, train_loader, test_loader, optimizer, loss_fn):
 	trainer = create_supervised_trainer(model, optimizer, loss_fn, device=opt.device)
 	evaluator = create_supervised_evaluator(model, metrics={'accuracy': Accuracy(), 'loss': Loss(loss_fn)}, device=opt.device)
 

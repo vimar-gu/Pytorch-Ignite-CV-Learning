@@ -1,10 +1,9 @@
 import argparse
 import torch.nn as nn
 from torch.optim import SGD
-from data import get_dataset
+from data import get_dataloader
 from models import build_model
-from torch.utils.data import DataLoader
-from engine.trainer import do_train
+from engine import do_train
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', type=str, default='lenet')
@@ -18,10 +17,9 @@ parser.add_argument('--log_interval', type=int, default=50)
 opt = parser.parse_args()
 
 model = build_model(opt)
-train_set, test_set = get_dataset(opt)
-train_loader = DataLoader(train_set, batch_size=opt.batch_size, shuffle=True)
-test_loader = DataLoader(test_set, batch_size=opt.batch_size, shuffle=False)
+train_loader, test_loader = get_dataloader(opt)
 optimizer = SGD(model.parameters(), lr=opt.lr)
 loss_fn = nn.NLLLoss()
 
-do_train(opt, model, train_loader, test_loader, optimizer, loss_fn)
+trainer = do_train(opt)
+trainer(opt, model, train_loader, test_loader, optimizer, loss_fn)

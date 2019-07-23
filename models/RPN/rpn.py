@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+import torchvision.models as models
 
 from .config import rpn_cfg
 from .proposal_layer import ProposalLayer
@@ -10,10 +11,34 @@ from .anchor_target_layer import AnchorTargetLayer
 import numpy as np
 
 
+def _smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights, sigma=1.0, dim=[1]):
+
+    sigma_2 = sigma ** 2
+    box_diff = bbox_pred - bbox_targets
+    in_box_diff = bbox_inside_weights * box_diff
+    abs_in_box_diff = torch.abs(in_box_diff)
+    smoothL1_sign = (abs_in_box_diff < 1. / sigma_2).detach().float()
+    in_loss_box = torch.pow(in_box_diff, 2) * (sigma_2 / 2.) * smoothL1_sign \
+                  + (abs_in_box_diff - (0.5 / sigma_2)) * (1. - smoothL1_sign)
+    out_loss_box = bbox_outside_weights * in_loss_box
+    loss_box = out_loss_box
+    for i in sorted(dim, reverse=True):
+      loss_box = loss_box.sum(i)
+    loss_box = loss_box.mean()
+    return loss_box
+
+
 class RPN(nn.Module):
     def __init__(self, din):
         super(RPN, self).__init__()
-        
+
+        vgg = models.vgg16()
+        vgg.load_state_dict(torch.load('/home/srtp/vgg16.pth'))
+        self.base_net = nn.Sequential(*list(vgg.features._modules.values())[:-1])
+        for layer in range(10):
+            for p in self.base_net[layer].parameters():
+                p.requires_grad = False
+
         self.din = din  # get depth of input feature map, e.g., 512
         self.anchor_scales = rpn_cfg.ANCHOR_SCALES
         self.anchor_ratios = rpn_cfg.ANCHOR_RATIOS
@@ -50,8 +75,9 @@ class RPN(nn.Module):
         )
         return x
 
-    def forward(self, base_feat, im_info, gt_boxes, num_boxes):
-
+    def forward(self, img, im_info, gt_boxes):
+        num_boxes = min(gt_boxes.size(1), rpn_cfg.MAX_NUM_GT_BOXES)
+        base_feat = self.base_net(img)
         batch_size = base_feat.size(0)
 
         # return feature map after convrelu layer
