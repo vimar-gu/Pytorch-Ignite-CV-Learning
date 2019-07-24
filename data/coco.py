@@ -47,6 +47,11 @@ class SimpleCocoDataset(Dataset):
         image_info = self.coco.loadImgs(self.image_ids[index])[0]
         img_path = os.path.join(self.root_dir, 'coco_2017', self.set_name, image_info['file_name'])
         img = skimage.io.imread(img_path)
+        try:
+            assert len(img.shape) == 3
+        except:
+            img = np.tile(img, (3, 1, 1))
+            img = np.transpose(img, (1, 2, 0))
         return img.astype(np.float32) / 255.0
 
     def load_anns(self, index):
