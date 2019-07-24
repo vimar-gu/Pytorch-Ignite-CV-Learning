@@ -7,7 +7,7 @@ from .config import rpn_cfg
 import sys
 sys.path.append('./')
 
-from utils import nms
+from utils import nms_pytorch
 from .generate_anchors import generate_anchors
 from .bbox_transform import bbox_transform_inv, clip_boxes
 
@@ -82,7 +82,7 @@ class ProposalLayer(nn.Module):
             # 6. apply nms (e.g. threshold = 0.7)
             # 7. take after_nms_topN (e.g. 300)
             # 8. return the top proposals (-> RoIs top)
-            keep_idx_i = nms.nms(torch.cat((proposals_single, scores_single), 1), nms_thresh)
+            keep_idx_i = nms_pytorch.nms(torch.cat((proposals_single, scores_single), 1), nms_thresh)
             keep_idx_i = keep_idx_i.long().view(-1)
 
             if post_nms_topN > 0:
