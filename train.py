@@ -16,6 +16,9 @@ parser.add_argument('--n_epochs', type=int, default=10)
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--device', type=str, default='cuda:0')
 parser.add_argument('--log_interval', type=int, default=50)
+
+parser.add_argument('--identify_instances', type=int, default=8)
+parser.add_argument('--triplet_margin', type=float, default=0.5)
 opt = parser.parse_args()
 
 model = build_model(opt)

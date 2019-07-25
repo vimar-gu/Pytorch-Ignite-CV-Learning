@@ -2,6 +2,7 @@ import cv2
 from torchvision.datasets import MNIST, CIFAR10
 from torchvision.transforms import Compose, ToTensor, Normalize
 from .coco import SimpleCocoDataset, Normalizer, Resizer, detection_collate
+from .triplet import RandomIdentifySampler
 from models.RPN.config import rpn_cfg
 from torch.utils.data import DataLoader
 
@@ -14,6 +15,12 @@ def get_dataloader(opt):
 		train_set = MNIST(download=True, root=dataset_root, transform=data_transform, train=True)
 		test_set = MNIST(download=True, root=dataset_root, transform=data_transform, train=False)
 		train_loader = DataLoader(train_set, batch_size=opt.batch_size, shuffle=True)
+		test_loader = DataLoader(test_set, batch_size=opt.batch_size, shuffle=False)
+	elif dataset_name == 'mnist_triplet':
+		data_transform = Compose([ToTensor(), Normalize((0.1307,), (0.3081,))])
+		train_set = MNIST(download=True, root=dataset_root, transform=data_transform, train=True)
+		test_set = MNIST(download=True, root=dataset_root, transform=data_transform, train=False)
+		train_loader = DataLoader(train_set, batch_size=opt.batch_size, sampler = RandomIdentifySampler(train_set, opt))
 		test_loader = DataLoader(test_set, batch_size=opt.batch_size, shuffle=False)
 	elif dataset_name == 'cifar':
 		data_transform = Compose([ToTensor(), Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
