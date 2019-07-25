@@ -27,4 +27,4 @@ def get_dataloader(opt):
 		test_set = SimpleCocoDataset(root_dir=dataset_root, set_name='val2017', transform = data_transform)
 		train_loader = DataLoader(train_set, batch_size=opt.batch_size, shuffle=True, collate_fn=detection_collate)
 		test_loader = DataLoader(test_set, batch_size=opt.batch_size, shuffle=False, collate_fn=detection_collate)
-	return (train_loader, train_loader)
+	return (train_loader, test_loader)
