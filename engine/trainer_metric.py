@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from ignite.engine import Engine, Events
+from ignite.metrics import Accuracy, Loss
 
 
 def create_supervised_trainer(model, optimizer, loss_fn, device=None):
@@ -23,9 +24,31 @@ def create_supervised_trainer(model, optimizer, loss_fn, device=None):
 	return Engine(_update)
 
 
+def create_supervised_evaluator(model, metrics, device=None):
+	if device is not None:
+		model.to(device)
+
+	def _inference(engine, batch):
+		model.eval()
+		with torch.no_grad():
+			data, target = batch
+			if device is not None:
+				data = data.to(device)
+				target = target.to(device)
+			_, out = model(data)
+			return (out, target)
+
+	engine = Engine(_inference)
+
+	for name, metric in metrics.items():
+		metric.attach(engine, name)
+
+	return engine
+
+
 def do_train_metric(opt, model, train_loader, test_loader, optimizer, loss_fn):
 	trainer = create_supervised_trainer(model, optimizer, loss_fn, device=opt.device)
-	# evaluator = create_supervised_evaluator(model, metrics={'accuracy': Accuracy(), 'loss': Loss(loss_fn)}, device=opt.device)
+	evaluator = create_supervised_evaluator(model, metrics={'accuracy': Accuracy()}, device=opt.device)
 
 	@trainer.on(Events.ITERATION_COMPLETED)
 	def log_training_loss(engine):
@@ -34,20 +57,18 @@ def do_train_metric(opt, model, train_loader, test_loader, optimizer, loss_fn):
 		if iter % opt.log_interval == 0:
 			print('Loss:', engine.state.output)
 
-	# @trainer.on(Events.EPOCH_COMPLETED)
-	# def log_training_result(engine):
-	# 	evaluator.run(train_loader)
-	# 	metrics = evaluator.state.metrics
-	# 	avg_accuracy = metrics['accuracy']
-	# 	avg_loss = metrics['loss']
-	# 	print('Training result: Epoch', engine.state.epoch, 'Accuracy:', avg_accuracy, 'Loss:', avg_loss)
+	@trainer.on(Events.EPOCH_COMPLETED)
+	def log_training_result(engine):
+		evaluator.run(train_loader)
+		metrics = evaluator.state.metrics
+		avg_accuracy = metrics['accuracy']
+		print('Training result: Epoch', engine.state.epoch, 'Accuracy:', avg_accuracy)
 
-	# @trainer.on(Events.EPOCH_COMPLETED)
-	# def log_validation_results(engine):
-	# 	evaluator.run(test_loader)
-	# 	metrics = evaluator.state.metrics
-	# 	avg_accuracy = metrics['accuracy']
-	# 	avg_loss = metrics['loss']
-	# 	print('Validation result: Epoch', engine.state.epoch, 'Accuracy:', avg_accuracy, 'Loss:', avg_loss)
+	@trainer.on(Events.EPOCH_COMPLETED)
+	def log_validation_results(engine):
+		evaluator.run(test_loader)
+		metrics = evaluator.state.metrics
+		avg_accuracy = metrics['accuracy']
+		print('Validation result: Epoch', engine.state.epoch, 'Accuracy:', avg_accuracy)
 
 	trainer.run(train_loader, max_epochs=opt.n_epochs)
