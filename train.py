@@ -19,6 +19,9 @@ parser.add_argument('--log_interval', type=int, default=50)
 
 parser.add_argument('--identify_instances', type=int, default=8)
 parser.add_argument('--triplet_margin', type=float, default=0.5)
+
+parser.add_argument('--bnneck', type=int, default=0)
+
 opt = parser.parse_args()
 
 model = build_model(opt)

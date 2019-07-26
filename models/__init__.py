@@ -9,6 +9,6 @@ def build_model(opt):
 	if model_name == 'lenet':
 		return LeNet()
 	elif model_name == 'resnet_mnist':
-		return ResNetMnist()
+		return ResNetMnist(opt)
 	elif model_name == 'rpn':
 		return RPN(rpn_cfg.DEMENSION_INPUT)

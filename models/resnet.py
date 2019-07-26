@@ -4,9 +4,12 @@ from torchvision.models.resnet import ResNet, BasicBlock
 
 
 class ResNetMnist(ResNet):
-	def __init__(self):
+	def __init__(self, opt):
 		super(ResNetMnist, self).__init__(BasicBlock, [2, 2, 2, 2], num_classes=10)
 		self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+		if opt.bnneck == 1:
+			self.bottleneck = nn.BatchNorm1d(512)
+			self.bottleneck.bias.requires_grad_(False)
 
 	def forward(self, x):
 		x = self.maxpool(self.relu(self.bn1(self.conv1(x))))
@@ -18,6 +21,8 @@ class ResNetMnist(ResNet):
 
 		x = self.avgpool(x)
 		feat = torch.flatten(x, 1)
-		x = self.fc(feat)
+		if self.bottleneck is not None:
+			feat = self.bottleneck(feat)
+		out = self.fc(feat)
 
-		return feat, x
+		return feat, out
