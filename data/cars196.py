@@ -11,17 +11,21 @@ class Cars196Dataset(Dataset):
 		super(Cars196Dataset, self).__init__()
 		self.root_dir, self.set_name = root_dir, set_name
 		self.transform = transform
-		self.annotation_mat = loadmat('{}/car_devkit/devkit/cars_{}_annos.mat'.format(self.root_dir, self.set_name))
-		self.image_dir = '{}/cars_{}'.format(self.root_dir, self.set_name)
+		self.annotation_mat = loadmat('{}/cars196/car_devkit/devkit/cars_{}_annos.mat'.format(self.root_dir, self.set_name), squeeze_me=True)
+		self.image_dir = '{}/cars196/cars_{}'.format(self.root_dir, self.set_name)
 		self.image_list, self.image_dict = self.load_image_dict()
 
 	def load_image_dict(self):
 		image_list = []
 		image_dict = {}
 		for annotation in self.annotation_mat['annotations'][0]:
+			try:
+				len(assert annotation) == 6
+			except:
+				break
 			image_list.append(annotation[5].item())
 			image_dict[annotation[5].item()] = annotation[4].item()
-		return image_dict
+		return (image_list, image_dict)
 
 	def __getitem__(self, index):
 		image = cv2.imread(os.path.join(self.image_dir, self.image_list[index]))
