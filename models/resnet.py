@@ -22,7 +22,7 @@ class ResNetMnist(ResNet):
 		x = self.avgpool(x)
 		feat = torch.flatten(x, 1)
 		if self.bottleneck is not None:
-			feat = self.bottleneck(feat)
-		out = self.fc(feat)
+			out = self.bottleneck(feat)
+		out = self.fc(out)
 
 		return feat, out
