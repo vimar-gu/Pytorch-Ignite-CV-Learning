@@ -144,67 +144,67 @@ class ResNet(nn.Module):
 
 
 class ResNetMnist(ResNet):
-	def __init__(self, opt):
-		super(ResNetMnist, self).__init__(BasicBlock, [2, 2, 2, 2], num_classes=10)
-		self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-		if opt.bnneck == 1:
-			self.bottleneck = nn.BatchNorm1d(512)
-			self.bottleneck.bias.requires_grad_(False)
+    def __init__(self, opt):
+        super(ResNetMnist, self).__init__(BasicBlock, [2, 2, 2, 2], num_classes=10)
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        if opt.bnneck == 1:
+            self.bottleneck = nn.BatchNorm1d(512)
+            self.bottleneck.bias.requires_grad_(False)
 
-	def forward(self, x):
-		x = self.maxpool(self.relu(self.bn1(self.conv1(x))))
+    def forward(self, x):
+        x = self.maxpool(self.relu(self.bn1(self.conv1(x))))
 
-		x = self.layer1(x)
-		x = self.layer2(x)
-		x = self.layer3(x)
-		x = self.layer4(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
-		x = self.avgpool(x)
-		feat = torch.flatten(x, 1)
-		if self.bottleneck is not None:
-			out = self.bottleneck(feat)
-		out = self.fc(out)
+        x = self.avgpool(x)
+        feat = torch.flatten(x, 1)
+        if self.bottleneck is not None:
+            out = self.bottleneck(feat)
+        out = self.fc(out)
 
-		return feat, out
+        return feat, out
 
 
 class ResNetMetric(nn.Module):
-	def __init__(self, opt):
-		super(ResNetMetric, self).__init__()
-		self.in_planes = 512
-		self.base = ResNet(last_stride=opt.last_stride, block=Bottleneck, layers=[3, 4, 6, 3])
-		self.base.load_param('/home/srtp/.torch/models/resnet50-19c8e357.pth')
+    def __init__(self, opt):
+        super(ResNetMetric, self).__init__()
+        self.in_planes = 2048
+        self.base = ResNet(last_stride=opt.last_stride, block=Bottleneck, layers=[3, 4, 6, 3])
+        self.base.load_param('/home/srtp/.torch/models/resnet50-19c8e357.pth')
 
-		self.gap = nn.AdaptiveAvgPool2d(1)
-		self.num_classes = opt.num_classes
-		self.with_bnneck = opt.bnneck
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        self.num_classes = opt.num_classes
+        self.with_bnneck = opt.bnneck
 
-		if self.with_bnneck == 1:
-			self.bottleneck = nn.BatchNorm1d(self.in_planes)
-			self.bottleneck.bias.requires_grad_(False)
-			self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
+        if self.with_bnneck == 1:
+            self.bottleneck = nn.BatchNorm1d(self.in_planes)
+            self.bottleneck.bias.requires_grad_(False)
+            self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
 
-			self.bottleneck.apply(weights_init_kaiming)
-			self.classifier.apply(weights_init_classifier)
-		else:
-			self.classifier = nn.Linear(self.in_planes, self.num_classes)
+            self.bottleneck.apply(weights_init_kaiming)
+            self.classifier.apply(weights_init_classifier)
+        else:
+            self.classifier = nn.Linear(self.in_planes, self.num_classes)
 
-	def forward(self, x):
-		global_feat = self.gap(self.base(x))
-		global_feat = torch.flatten(global_feat, 1)
+    def forward(self, x):
+        global_feat = self.gap(self.base(x))
+        global_feat = torch.flatten(global_feat, 1)
 
-		if self.with_bnneck == 1:
-			feat = self.bottleneck(global_feat)
-		else:
-			feat = global_feat
+        if self.with_bnneck == 1:
+            feat = self.bottleneck(global_feat)
+        else:
+            feat = global_feat
 
-		if self.training:
-			cls_score = self.classifier(feat)
-			return cls_score, feat
-		else:
-			return feat
+        cls_score = self.classifier(feat)
+        if self.training:
+            return feat, cls_score
+        else:
+            return cls_score
 
-	def load_param(self, trained_path):
-		param_dict = torch.load(trained_path)
-		for i in param_dict:
-			self.state_dict()[i].copy_(param_dict[i])
+    def load_param(self, trained_path):
+        param_dict = torch.load(trained_path)
+        for i in param_dict:
+            self.state_dict()[i].copy_(param_dict[i])
