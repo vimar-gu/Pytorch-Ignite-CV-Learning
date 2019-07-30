@@ -23,6 +23,8 @@ parser.add_argument('--triplet_margin', type=float, default=0.5)
 parser.add_argument('--k_list', type=list, default=[1, 2, 4])
 
 parser.add_argument('--bnneck', type=int, default=0)
+parser.add_argument('--last_stride', type=int, default=2)
+parser.add_argument('--num_classes', type=int, default=196)
 
 opt = parser.parse_args()
 

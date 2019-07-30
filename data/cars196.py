@@ -1,6 +1,7 @@
 import os
 import cv2
 import torch
+import numpy as np
 from scipy.io import loadmat
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
@@ -18,18 +19,20 @@ class Cars196Dataset(Dataset):
 	def load_image_dict(self):
 		image_list = []
 		image_dict = {}
-		for annotation in self.annotation_mat['annotations'][0]:
+		for annotation in self.annotation_mat['annotations']:
 			try:
-				len(assert annotation) == 6
+				assert len(annotation) == 6
 			except:
 				break
-			image_list.append(annotation[5].item())
-			image_dict[annotation[5].item()] = annotation[4].item()
+			image_list.append(annotation[5])
+			image_dict[annotation[5]] = annotation[4]
 		return (image_list, image_dict)
 
 	def __getitem__(self, index):
 		image = cv2.imread(os.path.join(self.image_dir, self.image_list[index]))
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+		image = cv2.resize(image, (256, 256), cv2.INTER_CUBIC)
+		image = image.astype(np.float32) / 255.0
 		if self.transform is not None:
 			image = self.transform(image)
 
