@@ -26,6 +26,8 @@ parser.add_argument('--k_list', type=list, default=[1, 2, 4])
 parser.add_argument('--bnneck', type=int, default=0)
 parser.add_argument('--last_stride', type=int, default=2)
 parser.add_argument('--num_classes', type=int, default=197)
+parser.add_argument('--output_dir', type=str, default='./')
+parser.add_argument('--only_infer', type=int, default=0)
 
 opt = parser.parse_args()
 print(opt)
@@ -35,5 +37,9 @@ train_loader, test_loader = get_dataloader(opt)
 optimizer = SGD(model.parameters(), lr=opt.lr, momentum=opt.momentum)
 loss_fn = get_loss_fn(opt)
 
-trainer = do_train(opt)
-trainer(opt, model, train_loader, test_loader, optimizer, loss_fn)
+if opt.only_infer:
+    inferencer = do_train(opt)
+    inferencer(opt, model, test_loader)
+else:
+    trainer = do_train(opt)
+    trainer(opt, model, train_loader, test_loader, optimizer, loss_fn)
